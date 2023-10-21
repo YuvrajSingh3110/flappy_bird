@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:core';
 
+import 'package:cool_alert/cool_alert.dart';
 import 'package:flappy_bird/barrier.dart';
 import 'package:flappy_bird/bird.dart';
 import 'package:flappy_bird/coverScreen.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -14,27 +16,67 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  static const String HIGH_SCORE_KEY = 'highScore';
   static double birdY = 0;
   double initialPos = birdY;
   double height = 0;
   double time = 0;
   double gravity = -9.8;
-  double velocity = 3;
+  double velocity = 2;
   double birdWidth = 0.1;
   double birdHeight = 0.1;
 
+  int score = 0;
+  int highScore = 0;
+  late Timer scoreTimer;
+
   bool isGameStarted = false;
-  static List<double> barrierX = [2, 2 + 1.5];
-  static double barrierWidth = 0.5;
+  static List<double> barrierX = [-2.5, -2.5 + 1.75];
+  static double barrierWidth = 0.25;
   List<List<double>> barrierHeight = [
+    [0.8, 0.2],
+    [0.7, 0.3],
     [0.6, 0.4],
+    [0.3, 0.7],
+    [0.2, 0.8],
     [0.4, 0.6],
+    [0.5, 0.5],
   ];
 
-  void startGame() {
+  Future<void> getHighScore() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      highScore = prefs.getInt(HIGH_SCORE_KEY) ?? 0;
+    });
+  }
+
+  void setValues(){
+    setState(() {
+      birdY = 0;
+      time = 0;
+      height = 0;
+      initialPos = birdY;
+      barrierX[0] = -2.5;
+      barrierX[1] = barrierX[0] + 1.75;
+      score = 0;
+    });
+  }
+
+  void startGame() async{
+    SharedPreferences prefs = await SharedPreferences.getInstance();
     isGameStarted = true;
-    Timer.periodic(const Duration(milliseconds: 30), (timer) {
-      height = (gravity * time * time) + (velocity * time);
+    scoreTimer = Timer.periodic(
+      const Duration(seconds: 1),
+          (timer) {
+        if (isGameStarted) {
+          setState(() {
+            score++;
+          });
+        }
+      },
+    );
+    Timer.periodic(const Duration(milliseconds: 30), (timer) async{
+      height = (0.5 * gravity * time * time) + (velocity * time);
 
       setState(() {
         birdY =
@@ -43,8 +85,14 @@ class _HomePageState extends State<HomePage> {
 
       if (isBirdDead()) {
         timer.cancel();
-        isGameStarted = false;
-        _showDialog();
+        if (score > highScore) {
+          highScore = score;
+          await prefs.setInt(HIGH_SCORE_KEY, highScore);
+        }
+        setState(() {
+          isGameStarted = false;
+        });
+        showLoseDialog();
       }
 
       moveMap();
@@ -121,14 +169,50 @@ class _HomePageState extends State<HomePage> {
         });
   }
 
+  Future<void> showLoseDialog() async {
+    await CoolAlert.show(
+      context: context,
+      type: CoolAlertType.info,
+      title: 'G A M E  O V E R',
+      text: score <= 0 ? 'Hard Luck 😂' : 'Great! you got $score points! 🤩',
+      confirmBtnText: 'Retry',
+      cancelBtnText: 'Exit',
+      confirmBtnColor: Colors.cyan,
+      cancelBtnTextStyle: TextStyle(
+        color: Colors.red[900],
+      ),
+      showCancelBtn: true,
+      barrierDismissible: false,
+      animType: CoolAlertAnimType.rotate,
+      backgroundColor: Colors.lightBlueAccent,
+      onConfirmBtnTap: () {
+        Navigator.of(context).pop();
+        setValues();
+      },
+      onCancelBtnTap: () {
+        Navigator.of(context).pop();
+        Navigator.of(context).pop();
+      },
+    );
+  }
+
   void resetGame() {
     Navigator.pop(context);
     setState(() {
       birdY = 0;
       isGameStarted = false;
       time = 0;
+      barrierX = [2, 2 + 1.5];
       initialPos = birdY;
     });
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    setValues();
+    getHighScore();
   }
 
   @override
@@ -141,7 +225,7 @@ class _HomePageState extends State<HomePage> {
             Expanded(
                 flex: 3,
                 child: Container(
-                  color: Colors.blueAccent,
+                  color: const Color(0xff6FC3CD),
                   child: Center(
                     child: Stack(
                       children: [
@@ -158,17 +242,67 @@ class _HomePageState extends State<HomePage> {
                         Barrier(
                             barrierX: barrierX[0],
                             barrierWidth: barrierWidth,
-                            barrierHeight: barrierHeight[1][0],
+                            barrierHeight: barrierHeight[0][1],
                             isTheBottomBarrier: true),
                         Barrier(
                             barrierX: barrierX[1],
                             barrierWidth: barrierWidth,
-                            barrierHeight: barrierHeight[1][1],
+                            barrierHeight: barrierHeight[1][0],
                             isTheBottomBarrier: false),
                         Barrier(
                             barrierX: barrierX[1],
                             barrierWidth: barrierWidth,
-                            barrierHeight: barrierHeight[0][1],
+                            barrierHeight: barrierHeight[1][1],
+                            isTheBottomBarrier: true),
+                        Barrier(
+                            barrierX: barrierX[0],
+                            barrierWidth: barrierWidth,
+                            barrierHeight: barrierHeight[2][0],
+                            isTheBottomBarrier: false),
+                        Barrier(
+                            barrierX: barrierX[0],
+                            barrierWidth: barrierWidth,
+                            barrierHeight: barrierHeight[2][1],
+                            isTheBottomBarrier: true),
+                        Barrier(
+                            barrierX: barrierX[1],
+                            barrierWidth: barrierWidth,
+                            barrierHeight: barrierHeight[3][0],
+                            isTheBottomBarrier: false),
+                        Barrier(
+                            barrierX: barrierX[1],
+                            barrierWidth: barrierWidth,
+                            barrierHeight: barrierHeight[3][1],
+                            isTheBottomBarrier: true),
+                        Barrier(
+                            barrierX: barrierX[0],
+                            barrierWidth: barrierWidth,
+                            barrierHeight: barrierHeight[4][0],
+                            isTheBottomBarrier: false),
+                        Barrier(
+                            barrierX: barrierX[0],
+                            barrierWidth: barrierWidth,
+                            barrierHeight: barrierHeight[4][1],
+                            isTheBottomBarrier: true),
+                        Barrier(
+                            barrierX: barrierX[1],
+                            barrierWidth: barrierWidth,
+                            barrierHeight: barrierHeight[5][0],
+                            isTheBottomBarrier: false),
+                        Barrier(
+                            barrierX: barrierX[1],
+                            barrierWidth: barrierWidth,
+                            barrierHeight: barrierHeight[5][1],
+                            isTheBottomBarrier: true),
+                        Barrier(
+                            barrierX: barrierX[0],
+                            barrierWidth: barrierWidth,
+                            barrierHeight: barrierHeight[6][0],
+                            isTheBottomBarrier: false),
+                        Barrier(
+                            barrierX: barrierX[0],
+                            barrierWidth: barrierWidth,
+                            barrierHeight: barrierHeight[6][1],
                             isTheBottomBarrier: true),
                         Container(
                           alignment: const Alignment(0, -0.5),
@@ -184,7 +318,12 @@ class _HomePageState extends State<HomePage> {
                 )),
             Expanded(
                 child: Container(
-              color: Colors.brown,
+                  width: MediaQuery.of(context).size.width,
+                  color: Colors.brown,
+                  child: Text(
+                    "SCORE $score  $highScore",
+                    style: const TextStyle(color: Colors.white),
+              ),
             )),
           ],
         ),

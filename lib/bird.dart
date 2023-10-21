@@ -11,7 +11,7 @@ class MyBird extends StatelessWidget {
     return Container(
       alignment: Alignment(0, (2 * birdY + birdHeight) / (2-birdHeight)),
       child: Image.asset(
-        "lib/images/bird.jpg",
+        "lib/images/flappy-bird-flying.jpg",
         width: MediaQuery.of(context).size.height * birdWidth / 2,
         height: MediaQuery.of(context).size.height * 3 / 4 * birdHeight / 2,
       ),
