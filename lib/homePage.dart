@@ -31,7 +31,7 @@ class _HomePageState extends State<HomePage> {
   late Timer scoreTimer;
 
   bool isGameStarted = false;
-  static List<double> barrierX = [-2.5, -2.5 + 1.75];
+  static List<double> barrierX = [1, 1 + 1.75];
   static double barrierWidth = 0.25;
   List<List<double>> barrierHeight = [
     [0.8, 0.2],
@@ -50,24 +50,24 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  void setValues(){
+  void setValues() {
     setState(() {
       birdY = 0;
       time = 0;
       height = 0;
       initialPos = birdY;
-      barrierX[0] = -2.5;
+      barrierX[0] = 1;
       barrierX[1] = barrierX[0] + 1.75;
       score = 0;
     });
   }
 
-  void startGame() async{
+  void startGame() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     isGameStarted = true;
     scoreTimer = Timer.periodic(
       const Duration(seconds: 1),
-          (timer) {
+      (timer) {
         if (isGameStarted) {
           setState(() {
             score++;
@@ -75,7 +75,7 @@ class _HomePageState extends State<HomePage> {
         }
       },
     );
-    Timer.periodic(const Duration(milliseconds: 30), (timer) async{
+    Timer.periodic(const Duration(milliseconds: 30), (timer) async {
       height = (0.5 * gravity * time * time) + (velocity * time);
 
       setState(() {
@@ -92,7 +92,7 @@ class _HomePageState extends State<HomePage> {
         setState(() {
           isGameStarted = false;
         });
-        showLoseDialog();
+        _showDialog();
       }
 
       moveMap();
@@ -143,23 +143,34 @@ class _HomePageState extends State<HomePage> {
         builder: (BuildContext context) {
           return AlertDialog(
             backgroundColor: Colors.brown,
-            title: const Center(
-              child: Text(
-                "G A M E  O V E R",
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
+            title: Center(
+                child: Column(
+              children: [
+                const Text(
+                  "G A M E  O V E R",
+                  style: TextStyle(color: Colors.white),
+                ),
+                Text(
+                  score <= 0
+                      ? "Hard Luck"
+                      : "Great! you got $score points!",
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ],
+            )),
             actions: [
               GestureDetector(
                 onTap: resetGame,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(5),
                   child: Container(
-                    padding: EdgeInsets.all(15),
+                    padding: const EdgeInsets.all(15),
                     color: Colors.white,
-                    child: const Text(
-                      "Play Again",
-                      style: TextStyle(color: Colors.blueAccent),
+                    child: const Center(
+                      child: Text(
+                        "Play Again",
+                        style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.w500),
+                      ),
                     ),
                   ),
                 ),
@@ -186,12 +197,13 @@ class _HomePageState extends State<HomePage> {
       animType: CoolAlertAnimType.rotate,
       backgroundColor: Colors.lightBlueAccent,
       onConfirmBtnTap: () {
-        Navigator.of(context).pop();
-        setValues();
+        // Navigator.of(context).pop();
+        // setValues();
+        resetGame();
       },
       onCancelBtnTap: () {
-        Navigator.of(context).pop();
-        Navigator.of(context).pop();
+        // Navigator.of(context).pop();
+        // Navigator.of(context).pop();
       },
     );
   }
@@ -202,7 +214,7 @@ class _HomePageState extends State<HomePage> {
       birdY = 0;
       isGameStarted = false;
       time = 0;
-      barrierX = [2, 2 + 1.5];
+      barrierX = [1, 1 + 1.75];
       initialPos = birdY;
     });
   }
@@ -318,13 +330,43 @@ class _HomePageState extends State<HomePage> {
                 )),
             Expanded(
                 child: Container(
-                  width: MediaQuery.of(context).size.width,
-                  color: Colors.brown,
-                  child: Text(
-                    "SCORE $score  $highScore",
-                    style: const TextStyle(color: Colors.white),
-              ),
-            )),
+                    width: MediaQuery.of(context).size.width,
+                    color: Colors.brown,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            const Text("S C O R E",
+                                style: TextStyle(
+                                    color: Colors.white, fontSize: 20)),
+                            Text(
+                              "$score",
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 40,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            const Text("H I G H  S C O R E",
+                                style: TextStyle(
+                                    color: Colors.white, fontSize: 20)),
+                            Text(
+                              "$highScore",
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 40,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        )
+                      ],
+                    ))),
           ],
         ),
       ),
