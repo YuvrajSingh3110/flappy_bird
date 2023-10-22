@@ -1,6 +1,10 @@
-# flappy_bird
+# Flappy Bird
 
-A new Flutter project.
+A simple flappy bird game made using flutter and some physics knowledge.
+
+## Play here
+
+https://drive.google.com/file/d/12QdT4aFCbt0uecSmPySzZC-7KL-2fpvH/view?usp=share_link
 
 ## Getting Started
 
